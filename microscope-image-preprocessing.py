@@ -3,6 +3,7 @@ import numpy as np
 import time 
 import os
 from sys import argv
+from datetime import date
 
 def nothing(args):
     pass
@@ -262,7 +263,7 @@ def find_contours(global_thresh, adaptive_thresh, skip):
 
 #upper bound for original image set is around 100000 lower, 500000 upper 
 #for new set is around 30000 lower, 100000 upper
-def square_cut(image, glob, skip, left_bound=0, right_bound=3072, top=0, bottom=2048):
+def square_cut(image, glob, skip, iter_num, save, left_bound=0, right_bound=3072, top=0, bottom=2048):
     #calculate bounds from image cut size
     small_square_area = (abs(left_bound - right_bound) * abs(top - bottom)) / 16
     #given a 30% wiggle room on each side of the area spectrum to ensure no misses
@@ -294,32 +295,40 @@ def square_cut(image, glob, skip, left_bound=0, right_bound=3072, top=0, bottom=
     cv2.drawContours(largest_clone, largest, -1, (0,255,0), 3)
     cv2.imshow('largest contour', largest_clone)
 
+    g_cntrRect = []
+    img_num = 1
+    for i in g_cnts:
+            #joins together contours that are >10% of the total contour length apart
+            epsilon = 0.1*cv2.arcLength(i,True)
+            #https://docs.opencv.org/4.x/d3/dc0/group__imgproc__shape.html#ga0012a5fdaea70b8a9970165d98722b4c
+            #https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html #this one better than other one
+            #approximates polygon from contours, hard to explain refer to the links
+            approx = cv2.approxPolyDP(i,epsilon,True)
+            #if the approximated polygon has 4 sides and is within the bounds of the square
+            if len(approx) == 4 and cv2.contourArea(i) > square_lower_bound and cv2.contourArea(i) < square_upper_bound:
+                #draw it 
+                cv2.drawContours(image,g_cntrRect,-1,(0,255,0),2)
+                x,y,w,h = cv2.boundingRect(approx)
+
+                if save:
+                    cv2.imwrite(str(date.today()) + "/" + str(iter_num) + "-" + str(img_num) + ".bmp", 
+                                image[y:y+h, x:x+w])
+                    print(str(date.today) + "/" + str(iter_num) + "-" + str(img_num) + ".bmp")
+                #place text over it showing it's size
+                cv2.putText(image, str(cv2.contourArea(approx)), (x, y-5), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+                cv2.imshow('imrect',image)
+                #add it to the contour list
+                g_cntrRect.append(approx)
+                img_num += 1
+                
+
+    print("Image # " + str(iter_num) + "\t" + str(len(g_cntrRect)) + " images cut out of 16\n")
+            
     if not skip:
         imclone = image.copy()
         cv2.drawContours(imclone, g_cnts, -1, (0,255,0), 3)
         cv2.imshow('global', imclone)
-
-        g_cntrRect = []
-        for i in g_cnts:
-                #joins together contours that are >10% of the total contour length apart
-                epsilon = 0.1*cv2.arcLength(i,True)
-                #https://docs.opencv.org/4.x/d3/dc0/group__imgproc__shape.html#ga0012a5fdaea70b8a9970165d98722b4c
-                #https://docs.opencv.org/4.x/dd/d49/tutorial_py_contour_features.html #this one better than other one
-                #approximates polygon from contours, hard to explain refer to the links
-                approx = cv2.approxPolyDP(i,epsilon,True)
-                #if the approximated polygon has 4 sides and is within the bounds of the square
-                if len(approx) == 4 and cv2.contourArea(i) > square_lower_bound and cv2.contourArea(i) < square_upper_bound:
-                    #draw it 
-                    cv2.drawContours(image,g_cntrRect,-1,(0,255,0),2)
-                    x,y,w,h = cv2.boundingRect(approx)
-                    #place text over it showing it's size
-                    cv2.putText(image, str(cv2.contourArea(approx)), (x, y-5), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-                    cv2.imshow('imrect',image)
-                    #add it to the contour list
-                    g_cntrRect.append(approx)
-                    
-        print(len(g_cntrRect))
 
         while(1):
 
@@ -331,31 +340,70 @@ def square_cut(image, glob, skip, left_bound=0, right_bound=3072, top=0, bottom=
     cv2.destroyAllWindows()
 
 def main():
+    today = str(date.today())
     args = argv
     arg_length = len(args)
     # if arg_length == 1:
     #     print("NO PATH PROVIDED")
     #     return
-    
+    p = 0
     # paths = load_image(args[1])
+    if arg_length == 3:
+        if os.path.exists(args[2]) and args[2].endswith('.txt'):
+            param = open(args[2], 'r')
+            params = param.read().split(' ')
+            p = 1
+        else:
+            print('INCORRECT PARAMETER FILE GIVEN')
     paths = load_image("images/0517A1.bmp")
     
-    skip = 0
-    L_bound = 0
-    R_bound = 3072
-    Top_bound = 0
-    Bottom_bound = 2048
-    Low_mask = [0,0,0]
-    Up_mask = [179,255,255]
-    blur_k_size = 3
-    low_thresh = 0
-    high_thresh = 255
-    g_t_type = 0
-    a_b_k_size = 3
-    at_method = 0
-    at_type = 0
-    b_size = 0
-    c = 0
+    if p:
+        skip = 1
+        L_bound = params[0]
+        R_bound = params[1]
+        Top_bound = params[2]
+        Bottom_bound = params[3]
+        Low_mask = params[4]
+        Up_mask = params[5]
+        blur_k_size = params[6]
+        low_thresh = params[7]
+        high_thresh = params[8]
+        g_t_type = params[9]
+        a_b_k_size = 3
+        at_method = 0
+        at_type = 0
+        b_size = 0
+        c = 0
+        iter_numb = 1
+    else:
+        skip = 0
+        L_bound = 0
+        R_bound = 3072
+        Top_bound = 0
+        Bottom_bound = 2048
+        Low_mask = [0,0,0]
+        Up_mask = [179,255,255]
+        blur_k_size = 3
+        low_thresh = 0
+        high_thresh = 255
+        g_t_type = 0
+        a_b_k_size = 3
+        at_method = 0
+        at_type = 0
+        b_size = 0
+        c = 0
+        iter_numb = 1
+
+    
+    if input("WRITE IMAGE? Y/N\n").lower() == 'y':
+        save = 1
+    else:
+        save = 0
+        print('NULL')
+
+    if save:
+        if not os.path.exists(today):
+            os.makedirs(today)
 
     for path in paths:
         image = cv2.imread(path)
@@ -369,12 +417,18 @@ def main():
         #                                                                           a_b_k_size, at_method, at_type,
         #                                                                           b_size, c)
         #g_contours, a_contours = find_contours(glob, adap, skip)
-        placeholder = square_cut(image, glob, skip, L_bound, R_bound, Top_bound, Bottom_bound)
+        #TODO
+        square_cut(image, glob, skip,iter_numb, save, L_bound, R_bound, Top_bound, Bottom_bound)
 
-        if input("SAVE SETTINGS? Y/N").lower() == 'y':
-            skip = 1
-        else:
-            pass
+        if not skip:
+            if input("SAVE SETTINGS? Y/N\n").lower() == 'y':
+                skip = 1
+                f = open(today + "/params.txt",'w')
+                f.write(str(L_bound) + ' ' + str(R_bound) + ' ' + str(Top_bound) + ' ' + str(Bottom_bound) + ' ' + 
+                        str(Low_mask) + ' ' + str(Up_mask) + ' ' + str(blur_k_size) + ' ' + str(low_thresh) + ' ' + 
+                        str(high_thresh) + ' ' + str(g_t_type))
+            else:
+                pass 
         
 
 
