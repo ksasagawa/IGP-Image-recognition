@@ -389,11 +389,11 @@ def main():
     today = str(date.today())
     args = argv
     arg_length = len(args)
-    # if arg_length == 1:
-    #     print("NO PATH PROVIDED")
-    #     return
+    if arg_length == 1:
+        print("NO PATH PROVIDED")
+        return
     p = 0
-    # paths = load_image(args[1])
+    paths = load_image(args[1])
     if arg_length == 3:
         if os.path.exists(args[2]) and args[2].endswith('.txt'):
             param = open(args[2], 'r')
@@ -402,7 +402,8 @@ def main():
             p = 1
         else:
             print('INCORRECT PARAMETER FILE GIVEN')
-    paths = load_image("images/0517A1.bmp")
+    #testing line
+    # paths = load_image("images/0517A1.bmp")
     
     if p:
         skip = 1
