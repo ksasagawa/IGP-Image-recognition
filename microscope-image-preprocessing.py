@@ -334,7 +334,7 @@ def square_cut(image, glob, iter_num, left_bound=0, right_bound=3072, top=0, bot
     cv2.destroyAllWindows()
 
 #function that saves images as calculated bounds as average areas of all squares
-def square_cut_save(image, glob, iter_num, save, left_bound=0, right_bound=3072, top=0, bottom=2048):
+def square_cut_save(image, glob, iter_num, save, today, left_bound=0, right_bound=3072, top=0, bottom=2048):
     #calculate bounds from image cut size
     small_square_area = (abs(left_bound - right_bound) * abs(top - bottom)) / 16
     #given a 30% wiggle room on each side of the area spectrum to ensure no misses
@@ -366,7 +366,7 @@ def square_cut_save(image, glob, iter_num, save, left_bound=0, right_bound=3072,
             if len(approx) == 4 and cv2.contourArea(i) > square_lower_bound and cv2.contourArea(i) < square_upper_bound:
                 x,y,w,h = cv2.boundingRect(approx)
                 if save:
-                    cv2.imwrite(str(date.today()) + "/" + str(iter_num) + "-" + str(img_num) + ".bmp", 
+                    cv2.imwrite(today + "/" + str(iter_num) + "-" + str(img_num) + ".bmp", 
                                 image[y:y+h, x:x+w])
                 rect_x.append(x)
                 rect_y.append(y)
@@ -380,7 +380,7 @@ def square_cut_save(image, glob, iter_num, save, left_bound=0, right_bound=3072,
     avg_h = round(avg_h / (len(g_cntrRect)))
     for i in range(len(g_cntrRect)):
         if save:
-            cv2.imwrite(str(date.today()) + "/" + str(iter_num) + "-" + str(i+1) +"-avgCUT"+ ".bmp", 
+            cv2.imwrite(today + "/" + str(iter_num) + "-" + str(i+1) +"-avgCUT"+ ".bmp", 
                         image[rect_y[i]:rect_y[i]+avg_h, rect_x[i]:rect_x[i]+avg_w])
 
     print("Image # " + str(iter_num) + "\t" + str(len(g_cntrRect)) + " images cut out of 16\n")
@@ -404,6 +404,16 @@ def main():
             print('INCORRECT PARAMETER FILE GIVEN')
     #testing line
     # paths = load_image("images/0517A1.bmp")
+    
+    if arg_length >= 3:
+        if os.path.exists(args[2]) and args[2].endswith('.txt'):
+            param = open(args[2], 'r')
+            params = param.read().split('-')
+            print(params)
+            p = 1
+        else:
+            print('INCORRECT PARAMETER FILE GIVEN')
+    paths = load_image("images/0517A1.bmp")
     
     if p:
         skip = 1
@@ -450,6 +460,9 @@ def main():
     else:
         save = 0
         print('NULL')
+
+    if arg_length == 4:
+        today = str(args[3])
 
     if save:
         if not os.path.exists(today):
