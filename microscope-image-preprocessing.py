@@ -450,7 +450,7 @@ def main():
         save = 1
     else:
         save = 0
-        print('NULL')
+        print('NO SAVE')
 
     if arg_length == 4:
         today = str(args[3])
