@@ -12,7 +12,7 @@ def nothing(args):
 def load_image(path):
     #checking if path is a folder or not, if so extract all the bmp files from it
     if os.path.isdir(path):
-        paths = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith('.bmp')]
+        paths = [os.path.join(path,f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith('.bmp')]
         print(paths)
     elif os.path.isfile(path):
         paths = [path]
@@ -393,17 +393,8 @@ def main():
         print("NO PATH PROVIDED")
         return
     p = 0
+
     paths = load_image(args[1])
-    if arg_length == 3:
-        if os.path.exists(args[2]) and args[2].endswith('.txt'):
-            param = open(args[2], 'r')
-            params = param.read().split('-')
-            print(params)
-            p = 1
-        else:
-            print('INCORRECT PARAMETER FILE GIVEN')
-    #testing line
-    # paths = load_image("images/0517A1.bmp")
     
     if arg_length >= 3:
         if os.path.exists(args[2]) and args[2].endswith('.txt'):
@@ -413,7 +404,7 @@ def main():
             p = 1
         else:
             print('INCORRECT PARAMETER FILE GIVEN')
-    paths = load_image("images/0517A1.bmp")
+    #paths = load_image("images/verf/12_scale2.bmp")
     
     if p:
         skip = 1
@@ -482,7 +473,7 @@ def main():
         #g_contours, a_contours = find_contours(glob, adap, skip)
         #TODO
         if save or skip:
-            square_cut_save(image, glob, iter_numb, save, L_bound, R_bound, Top_bound, Bottom_bound)
+            square_cut_save(image, glob, iter_numb, save, today, L_bound, R_bound, Top_bound, Bottom_bound)
         else:
             square_cut(image, glob, iter_numb, L_bound, R_bound, Top_bound, Bottom_bound)
 
@@ -495,7 +486,7 @@ def main():
                         str(high_thresh) + '-' + str(g_t_type))
             else:
                 pass 
-        
+        iter_numb += 1
 
 
 
