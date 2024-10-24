@@ -8,7 +8,7 @@ cv2.namedWindow('image',cv2.WINDOW_KEEPRATIO)
 cv2.namedWindow('imrect',cv2.WINDOW_KEEPRATIO)
 
 # Load image
-image = cv2.imread('images/0517A1.bmp')
+image = cv2.imread('images/1.2_A1.bmp')
 image = image[0:2048,300:2700]
 imclone = image.copy()
 hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)

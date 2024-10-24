@@ -30,6 +30,7 @@ hMin = sMin = vMin = hMax = sMax = vMax = 0
 phMin = psMin = pvMin = phMax = psMax = pvMax = 0
 
 img = cv2.imread(img_path)
+img = img[0:2048,300:2700]
 output = img
 waitTime = 33
 
@@ -51,6 +52,7 @@ while(1):
     # Create HSV Image and threshold into a range.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)
+    mask = cv2.bitwise_not(mask)
     output = cv2.bitwise_and(img,img, mask= mask)
 
     # Print if there is a change in HSV value
